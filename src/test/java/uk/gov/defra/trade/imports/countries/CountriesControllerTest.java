@@ -1,6 +1,7 @@
 package uk.gov.defra.trade.imports.countries;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.Mockito.when;
 
 import java.util.List;
@@ -34,7 +35,7 @@ class CountriesControllerTest {
     when(mdmService.getCountries("GBNAG_SPS_EX")).thenReturn(unsortedCountries);
 
     // When
-    ResponseEntity<List<Country>> response = controller.getCountries("GBNAG_SPS_EX");
+    ResponseEntity<List<Country>> response = controller.getCountries("GBNAG_SPS_EX", null);
 
     // Then: countries are returned in alphabetical order by name
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -52,7 +53,7 @@ class CountriesControllerTest {
     when(mdmService.getCountries("GBNAG_SPS_EX")).thenReturn(List.of(mdmCountry));
 
     // When
-    ResponseEntity<List<Country>> response = controller.getCountries("GBNAG_SPS_EX");
+    ResponseEntity<List<Country>> response = controller.getCountries("GBNAG_SPS_EX", null);
 
     // Then
     Country country = response.getBody().get(0);
@@ -66,10 +67,40 @@ class CountriesControllerTest {
     when(mdmService.getCountries(null)).thenReturn(List.of());
 
     // When
-    ResponseEntity<List<Country>> response = controller.getCountries(null);
+    ResponseEntity<List<Country>> response = controller.getCountries(null, null);
 
     // Then
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(response.getBody()).isEmpty();
+  }
+
+  @Test
+  void getCountries_returnsIsoCountries_whenSystemParamIsIso() {
+    MdmCountry mdmCountry = MdmCountry.builder()
+        .effectiveAlpha2("FR")
+        .effectiveAlias("France")
+        .build();
+    when(mdmService.getIsoCountries()).thenReturn(List.of(mdmCountry));
+
+    ResponseEntity<List<Country>> response = controller.getCountries(null, "ISO");
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).extracting(Country::getCode, Country::getName)
+        .containsExactly(tuple("FR", "France"));
+  }
+
+  @Test
+  void getCountries_returnsIsoCountries_whenSystemParamIsLowercaseIso() {
+    MdmCountry mdmCountry = MdmCountry.builder()
+        .effectiveAlpha2("DE")
+        .effectiveAlias("Germany")
+        .build();
+    when(mdmService.getIsoCountries()).thenReturn(List.of(mdmCountry));
+
+    ResponseEntity<List<Country>> response = controller.getCountries(null, "iso");
+
+    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    assertThat(response.getBody()).extracting(Country::getCode, Country::getName)
+        .containsExactly(tuple("DE", "Germany"));
   }
 }

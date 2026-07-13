@@ -23,8 +23,12 @@ public class CountriesController {
   @GetMapping()
   @Timed("controller.getCountries.time")
   public ResponseEntity<List<Country>> getCountries(
-      @RequestParam(required = false, value = "blocks") String blocks) {
-    List<Country> countries = countriesService.getCountries(blocks)
+      @RequestParam(required = false, value = "blocks") String blocks,
+      @RequestParam(required = false, value = "system") String system) {
+    var mdmCountries = "ISO".equalsIgnoreCase(system)
+        ? countriesService.getIsoCountries()
+        : countriesService.getCountries(blocks);
+    List<Country> countries = mdmCountries
         .stream()
         .map(Country::new)
         .sorted(Comparator.comparing(Country::getName))
