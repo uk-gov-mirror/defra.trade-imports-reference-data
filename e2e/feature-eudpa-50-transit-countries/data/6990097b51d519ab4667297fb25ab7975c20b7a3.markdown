@@ -1,0 +1,88 @@
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/pages/transited-countries.spec.ts >> Transited countries >> can search, add, remove and save transited countries
+- Location: tests/e2e/pages/transited-countries.spec.ts:27:3
+
+# Error details
+
+```
+Error: expect(locator).toBeHidden() failed
+
+Locator:  getByRole('checkbox', { name: 'France' })
+Expected: hidden
+Received: visible
+Timeout:  5000ms
+
+Call log:
+  - Expect "toBeHidden" with timeout 5000ms
+  - waiting for getByRole('checkbox', { name: 'France' })
+    14 × locator resolved to <input value="FR" type="checkbox" data-country-option="" id="transited-country-21" name="transitedCountries" data-country-name="france" class="govuk-checkboxes__input"/>
+       - unexpected value "visible"
+
+```
+
+```yaml
+- checkbox "France"
+```
+
+# Test source
+
+```ts
+  1  | import { test, expect } from '@fixtures';
+  2  | import { meansOfTransport } from '@domain/constants/means-of-transport';
+  3  | import { pointOfEntries } from '@domain/constants/point-of-entries';
+  4  | 
+  5  | test.describe('Transited countries', () => {
+  6  |   test('routes road transport to transited countries after arrival details', async ({ pages, journey }) => {
+  7  |     await journey.toEntryPoint();
+  8  |     await journey.fillEntryPoint({
+  9  |       pointOfEntry: pointOfEntries.aberdeen,
+  10 |       meansOfTransport: meansOfTransport.roadVehicle,
+  11 |     });
+  12 |     await journey.saveEntryPoint({ meansOfTransport: meansOfTransport.roadVehicle });
+  13 | 
+  14 |     await expect(pages.page).toHaveURL(pages.transitedCountries.expectedUrl);
+  15 |     await expect(pages.transitedCountries.heading).toBeVisible();
+  16 |   });
+  17 | 
+  18 |   test('routes air transport directly to transporter after arrival details', async ({ pages, journey }) => {
+  19 |     await journey.toEntryPoint();
+  20 |     await journey.fillEntryPoint({ meansOfTransport: meansOfTransport.airplane });
+  21 |     await journey.saveEntryPoint({ meansOfTransport: meansOfTransport.airplane });
+  22 | 
+  23 |     await expect(pages.page).toHaveURL(pages.transporter.expectedUrl);
+  24 |     await expect(pages.transporter.heading).toBeVisible();
+  25 |   });
+  26 | 
+  27 |   test('can search, add, remove and save transited countries', async ({ pages, journey }) => {
+  28 |     await journey.toTransitedCountries();
+  29 | 
+  30 |     await expect(pages.transitedCountries.checkboxForCountry('France')).toBeVisible();
+  31 | 
+  32 |     await pages.transitedCountries.searchForCountry('ger');
+  33 |     await expect(pages.transitedCountries.checkboxForCountry('Germany')).toBeVisible();
+> 34 |     await expect(pages.transitedCountries.checkboxForCountry('France')).toBeHidden();
+     |                                                                         ^ Error: expect(locator).toBeHidden() failed
+  35 | 
+  36 |     await journey.addTransitedCountry('Germany');
+  37 |     await journey.addTransitedCountry('France');
+  38 | 
+  39 |     await expect(pages.transitedCountries.selectedCountry('France')).toBeVisible();
+  40 |     await expect(pages.transitedCountries.selectedCountry('Germany')).toBeVisible();
+  41 | 
+  42 |     await pages.transitedCountries.removeButtonForCountry('France').click();
+  43 |     await expect(pages.transitedCountries.selectedCountry('France')).toHaveCount(0);
+  44 |     await expect(pages.transitedCountries.selectedCountry('Germany')).toBeVisible();
+  45 | 
+  46 |     await journey.saveTransitedCountries();
+  47 |     await expect(pages.page).toHaveURL(pages.transporter.expectedUrl);
+  48 |   });
+  49 | });
+  50 | 
+```
