@@ -15,7 +15,6 @@ public class MdmService {
 
   private static final String MDM_API_TRACE_ID_KEY = "x-ms-middleware-request-id";
   private static final String SYSTEM = "GBNAG";
-  private static final String ISO_SYSTEM = "ISO";
 
   private final MdmClient mdmClient;
   private final MdmConfiguration mdmConfiguration;
@@ -31,24 +30,6 @@ public class MdmService {
       return List.of();
     }
     return body.getResult();
-  }
-
-  @Cacheable(value = "MDM_ISO_COUNTRIES_CACHE", unless = "#result == null || #result.isEmpty()")
-  public List<MdmCountry> getIsoCountries() {
-    String ocpApimSubscriptionKey = mdmConfiguration.getOcpApimSubscriptionKey();
-
-    ResponseEntity<List<MdmCountry>> responseEntity =
-        mdmClient.getCountries(ocpApimSubscriptionKey, ISO_SYSTEM, null);
-    logTraceId(responseEntity);
-
-    List<MdmCountry> body = responseEntity.getBody();
-    if (body == null) {
-      log.warn("MDM returned a null body for ISO countries request");
-      return List.of();
-    }
-    return body.stream()
-        .filter(c -> !"GB".equals(c.getEffectiveAlpha2()))
-        .toList();
   }
 
   @Cacheable(value = "MDM_COUNTRIES_CACHE", unless = "#result == null || #result.isEmpty()")

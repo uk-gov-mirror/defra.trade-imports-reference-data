@@ -144,47 +144,6 @@ class MdmServiceTest {
   }
 
   @Test
-  void getIsoCountries_callsMdmWithIsoSystemAndNoBlocks() {
-    when(mdmClient.getCountries(any(), any(), any())).thenReturn(responseWith(List.of()));
-
-    mdmService.getIsoCountries();
-
-    verify(mdmClient).getCountries(SUBSCRIPTION_KEY, "ISO", null);
-  }
-
-  @Test
-  void getIsoCountries_filtersOutUk() {
-    List<MdmCountry> mdmCountries = List.of(
-        MdmCountry.builder()
-            .effectiveAlpha2("GB")
-            .effectiveAlias("United Kingdom")
-            .build(),
-        MdmCountry.builder()
-            .effectiveAlpha2("FR")
-            .effectiveAlias("France")
-            .build()
-    );
-    when(mdmClient.getCountries(any(), any(), any())).thenReturn(responseWith(mdmCountries));
-
-    List<MdmCountry> result = mdmService.getIsoCountries();
-
-    assertThat(result).extracting(MdmCountry::getEffectiveAlpha2).containsExactly("FR");
-  }
-
-  @Test
-  void getIsoCountries_returnsEmptyList_whenMdmBodyIsNull() {
-    HttpHeaders headers = new HttpHeaders();
-    headers.add(MDM_TRACE_HEADER, "trace-null-body");
-    ResponseEntity<List<MdmCountry>> nullBodyResponse =
-        ResponseEntity.ok().headers(headers).body(null);
-    when(mdmClient.getCountries(any(), any(), any())).thenReturn(nullBodyResponse);
-
-    List<MdmCountry> result = mdmService.getIsoCountries();
-
-    assertThat(result).isEmpty();
-  }
-
-  @Test
   void getCountries_callsMdmWithGbnagSystemAndPassedBlocksParam() {
     // Given
     when(mdmClient.getCountries(any(), any(), any())).thenReturn(responseWith(List.of()));

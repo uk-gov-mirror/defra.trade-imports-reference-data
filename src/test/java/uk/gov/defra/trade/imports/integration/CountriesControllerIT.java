@@ -26,7 +26,6 @@ class CountriesControllerIT extends IntegrationBase {
   @BeforeEach
   void stubServices() {
     cacheManager.getCache("MDM_COUNTRIES_CACHE").clear();
-    cacheManager.getCache("MDM_ISO_COUNTRIES_CACHE").clear();
     stubMdmCountriesResponse();
   }
 
@@ -46,45 +45,6 @@ class CountriesControllerIT extends IntegrationBase {
     assertThat(body).doesNotContain("\"GB\"");
     // Martinique is filtered out (includeCountry=false for GBNAG_SPS_EX)
     assertThat(body).doesNotContain("\"MQ\"");
-  }
-
-  @Test
-  void getCountries_withSystemIso_returnsMappedCountriesAndCallsMdmWithIso() {
-    ResponseEntity<String> response = restTemplate.getForEntity(
-        "/countries?system=ISO", String.class);
-
-    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String body = response.getBody();
-    assertThat(body).contains("\"code\":\"FR\"");
-    assertThat(body).contains("\"name\":\"France\"");
-    assertThat(body).contains("\"code\":\"DE\"");
-    assertThat(body).contains("\"name\":\"Germany\"");
-    // ISO path does not apply block filters — Martinique is included
-    assertThat(body).contains("\"code\":\"MQ\"");
-    // UK is still filtered out
-    assertThat(body).doesNotContain("\"GB\"");
-
-    usingStub().verify(
-        request()
-            .withMethod("GET")
-            .withPath("/mdm-service/mdm/geo/countries")
-            .withQueryStringParameter("system", "ISO"),
-        VerificationTimes.exactly(1)
-    );
-  }
-
-  @Test
-  void getCountries_withSystemIso_returnsCachedResult_onSecondCall() {
-    restTemplate.getForEntity("/countries?system=ISO", String.class);
-    restTemplate.getForEntity("/countries?system=ISO", String.class);
-
-    usingStub().verify(
-        request()
-            .withMethod("GET")
-            .withPath("/mdm-service/mdm/geo/countries")
-            .withQueryStringParameter("system", "ISO"),
-        VerificationTimes.exactly(1)
-    );
   }
 
   @Test
